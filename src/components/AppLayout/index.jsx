@@ -1,49 +1,36 @@
-import { useToggle } from '@uidotdev/usehooks'
 import { Outlet } from 'react-router'
 import Sidebar from '../Sidebar/index.jsx'
-import { Layout, Column, Header, MenuButton, HeaderBrand, Overlay, Main } from './styles.js'
+import BottomNav from '../BottomNav/index.jsx'
+import Settings from '../Settings/index.jsx'
+import { operationalMenu, catalogMenu } from '../../navigation/menuItems.js'
+import { Layout, Column, Header, HeaderBrand, Main } from './styles.js'
 
 /**
  * Estructura general de la aplicación (barra lateral, cabecera y contenido).
  *
- * @returns {JSX.Element} Diseño con menú lateral y área de contenido.
+ * @param {object} props - Propiedades del layout.
+ * @param {string} [props.variant='operational'] - Variante del layout:
+ *   'operational' (tema claro) o 'catalog' (tema gris).
+ * @returns {JSX.Element} Diseño con menú lateral (escritorio), menú inferior
+ *   (móvil) y área de contenido.
  */
-function AppLayout() {
-  const [menuOpen, setMenuOpen] = useToggle(false)
-
-  /** Cierra el menú lateral. */
-  const closeMenu = () => setMenuOpen(false)
-
-  /** Abre el menú lateral. */
-  const openMenu = () => setMenuOpen(true)
+function AppLayout({ variant = 'operational' }) {
+  const isCatalog = variant === 'catalog'
+  const menu = isCatalog ? catalogMenu : operationalMenu
 
   return (
-    <Layout>
-      <Sidebar open={menuOpen} onClose={closeMenu} />
+    <Layout data-theme={isCatalog ? 'catalog' : undefined}>
+      <Sidebar items={menu.items} footerLink={menu.footerLink} />
       <Column>
         <Header>
-          <MenuButton type="button" onClick={openMenu} aria-label="Abrir menú">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <line x1="4" y1="6" x2="20" y2="6" />
-              <line x1="4" y1="12" x2="20" y2="12" />
-              <line x1="4" y1="18" x2="20" y2="18" />
-            </svg>
-          </MenuButton>
           <HeaderBrand>Encantos</HeaderBrand>
         </Header>
         <Main>
           <Outlet />
         </Main>
+        <BottomNav items={menu.items} footerLink={menu.footerLink} />
       </Column>
-      {menuOpen && <Overlay onClick={closeMenu} />}
+      {isCatalog && <Settings />}
     </Layout>
   )
 }

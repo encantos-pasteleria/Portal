@@ -1,64 +1,90 @@
 import { create } from 'zustand'
-import { listSuppliers } from '../services/suppliers.js'
+import { listSuppliers, countAllSuppliers, listAllSuppliers } from '../services/suppliers.js'
 
 export const useSuppliersStore = create((set, get) => ({
   items: [],
+  allItems: [],
   status: 'loading',
   search: '',
   active: true,
   ingredientFilter: [],
   page: 1,
+  total: 0,
+  cursors: [null],
+  hasMore: false,
 
-  /**
-   * Carga los proveedores desde la API y actualiza el estado de la solicitud.
-   *
-   * @returns {Promise<void>}
-   */
   load: async () => {
+    const state = get()
     set({ status: 'loading' })
     try {
-      const items = await listSuppliers(get().active)
-      set({ items, status: 'success' })
+      const [result, count] = await Promise.all([
+        listSuppliers(state.active, null),
+        countAllSuppliers(state.active),
+      ])
+      set({
+        items: result.items,
+        total: count,
+        cursors: [null, result.lastDoc],
+        hasMore: result.hasMore,
+        page: 1,
+        status: 'success',
+      })
     } catch {
       set({ status: 'error' })
     }
   },
 
-  /**
-   * Actualiza el texto de búsqueda y vuelve a la primera página.
-   *
-   * @param {string} search - Texto de búsqueda.
-   */
-  setSearch: (search) => set({ search, page: 1 }),
+  loadPage: async (page) => {
+    const state = get()
+    const cursor = state.cursors[page - 1] ?? null
+    set({ status: 'loading' })
+    try {
+      const result = await listSuppliers(state.active, cursor)
+      const newCursors = [...state.cursors]
+      while (newCursors.length <= page) newCursors.push(null)
+      newCursors[page] = result.lastDoc
+      set({
+        items: result.items,
+        page,
+        cursors: newCursors,
+        hasMore: result.hasMore,
+        status: 'success',
+      })
+    } catch {
+      set({ status: 'error' })
+    }
+  },
 
-  /**
-   * Actualiza el filtro por estado y vuelve a la primera página.
-   *
-   * @param {boolean} active - true para activos, false para inactivos.
-   */
-  setActive: (active) => set({ active, page: 1 }),
+  setSearch: (search) => {
+    set({ search, page: 1 })
+    get().load()
+  },
 
-  /**
-   * Actualiza el filtro por ingredientes y vuelve a la primera página.
-   *
-   * @param {Array} ingredientFilter - Ids de ingredientes seleccionados.
-   */
-  setIngredientFilter: (ingredientFilter) => set({ ingredientFilter, page: 1 }),
+  loadAll: async () => {
+    try {
+      const allItems = await listAllSuppliers()
+      set({ allItems })
+    } catch {
+      /* noop */
+    }
+  },
 
-  /**
-   * Cambia la página actual de la lista.
-   *
-   * @param {number} page - Número de página.
-   */
-  setPage: (page) => set({ page }),
+  setActive: (active) => {
+    set({ active, page: 1 })
+    get().load()
+  },
 
-  /**
-   * Elimina localmente un proveedor de la lista (al cambiar su estado activo).
-   *
-   * @param {string|number} id - Identificador del proveedor.
-   */
+  setIngredientFilter: (ingredientFilter) => {
+    set({ ingredientFilter, page: 1 })
+  },
+
+  setPage: (page) => {
+    get().loadPage(page)
+  },
+
   removeItem: (id) =>
     set((state) => ({
       items: state.items.filter((item) => item.id !== id),
+      total: Math.max(0, state.total - 1),
     })),
 }))

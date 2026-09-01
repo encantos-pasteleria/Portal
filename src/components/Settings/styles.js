@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { breakpoints } from '../../styles/breakpoints.js'
 
 export const FloatingButton = styled.button`
   position: fixed;
@@ -20,6 +21,10 @@ export const FloatingButton = styled.button`
 
   &:hover {
     filter: brightness(0.92);
+  }
+
+  @media (max-width: ${breakpoints.mobileMax}) {
+    bottom: calc(20px + var(--tab-bar-height) + env(safe-area-inset-bottom));
   }
 `
 

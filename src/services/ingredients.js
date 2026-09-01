@@ -1,52 +1,33 @@
-import apiRequest from './api.js'
+import {
+  getIngredients,
+  countIngredients,
+  getAllIngredients,
+  createIngredient as firebaseCreateIngredient,
+  updateIngredient as firebaseUpdateIngredient,
+  updateIngredientActive as firebaseUpdateIngredientActive,
+} from '../firebase/firestore.js'
 
-/**
- * Obtiene la lista de ingredientes.
- *
- * @param {boolean} active - Filtra por estado (true: activos, false: inactivos).
- * @returns {Promise<unknown>} Lista de ingredientes.
- */
-export function listIngredients(active) {
-  return apiRequest('ingredient/list', 'GET', { active })
+export function listIngredients(active, cursor) {
+  return getIngredients(active, cursor)
 }
 
-/**
- * Crea un nuevo ingrediente.
- *
- * @param {object} data - Datos del ingrediente a crear.
- * @returns {Promise<unknown>} Ingrediente creado.
- */
+export function countAllIngredients(active) {
+  return countIngredients(active)
+}
+
+export function listAllIngredients() {
+  return getAllIngredients()
+}
+
 export function createIngredient(data) {
-  return apiRequest('ingredient/create', 'POST', data)
+  return firebaseCreateIngredient(data)
 }
 
-/**
- * Actualiza un ingrediente existente.
- *
- * @param {object} data - Datos del ingrediente, incluido su id.
- * @returns {Promise<unknown>} Ingrediente actualizado.
- */
 export function updateIngredient(data) {
-  return apiRequest('ingredient/update', 'POST', data)
+  const { id, ...rest } = data
+  return firebaseUpdateIngredient(id, rest)
 }
 
-/**
- * Activa o desactiva un ingrediente.
- *
- * @param {string|number} id - Identificador del ingrediente.
- * @param {boolean} active - Estado activo deseado.
- * @returns {Promise<unknown>} Resultado de la operación.
- */
 export function updateIngredientActive(id, active) {
-  return apiRequest('ingredient/updateActive', 'POST', { id, active })
-}
-
-/**
- * Elimina un ingrediente.
- *
- * @param {string|number} id - Identificador del ingrediente.
- * @returns {Promise<unknown>} Resultado de la operación.
- */
-export function removeIngredient(id) {
-  return apiRequest('ingredient/delete', 'POST', { id })
+  return firebaseUpdateIngredientActive(id, active)
 }

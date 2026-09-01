@@ -1,52 +1,33 @@
-import apiRequest from './api.js'
+import {
+  getSuppliers,
+  countSuppliers,
+  getAllSuppliers,
+  createSupplier as firebaseCreateSupplier,
+  updateSupplier as firebaseUpdateSupplier,
+  updateSupplierActive as firebaseUpdateSupplierActive,
+} from '../firebase/firestore.js'
 
-/**
- * Obtiene la lista de proveedores.
- *
- * @param {boolean} active - Filtra por estado (true: activos, false: inactivos).
- * @returns {Promise<unknown>} Lista de proveedores.
- */
-export function listSuppliers(active) {
-  return apiRequest('supplier/list', 'GET', { active })
+export function listSuppliers(active, cursor) {
+  return getSuppliers(active, cursor)
 }
 
-/**
- * Crea un nuevo proveedor.
- *
- * @param {object} data - Datos del proveedor a crear.
- * @returns {Promise<unknown>} Proveedor creado.
- */
+export function countAllSuppliers(active) {
+  return countSuppliers(active)
+}
+
+export function listAllSuppliers() {
+  return getAllSuppliers()
+}
+
 export function createSupplier(data) {
-  return apiRequest('supplier/create', 'POST', data)
+  return firebaseCreateSupplier(data)
 }
 
-/**
- * Actualiza un proveedor existente.
- *
- * @param {object} data - Datos del proveedor, incluido su id.
- * @returns {Promise<unknown>} Proveedor actualizado.
- */
 export function updateSupplier(data) {
-  return apiRequest('supplier/update', 'POST', data)
+  const { id, ...rest } = data
+  return firebaseUpdateSupplier(id, rest)
 }
 
-/**
- * Activa o desactiva un proveedor.
- *
- * @param {string|number} id - Identificador del proveedor.
- * @param {boolean} active - Estado activo deseado.
- * @returns {Promise<unknown>} Resultado de la operación.
- */
 export function updateSupplierActive(id, active) {
-  return apiRequest('supplier/updateActive', 'POST', { id, active })
-}
-
-/**
- * Elimina un proveedor.
- *
- * @param {string|number} id - Identificador del proveedor.
- * @returns {Promise<unknown>} Resultado de la operación.
- */
-export function removeSupplier(id) {
-  return apiRequest('supplier/delete', 'POST', { id })
+  return firebaseUpdateSupplierActive(id, active)
 }

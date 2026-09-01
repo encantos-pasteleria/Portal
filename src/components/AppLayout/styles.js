@@ -4,6 +4,7 @@ import { breakpoints } from '../../styles/breakpoints.js'
 export const Layout = styled.div`
   display: flex;
   min-height: 100%;
+  background: var(--color-bg);
 `
 
 export const Column = styled.div`
@@ -20,30 +21,11 @@ export const Header = styled.header`
   @media (max-width: ${breakpoints.mobileMax}) {
     display: flex;
     align-items: center;
-    gap: 10px;
     height: var(--header-height);
     flex-shrink: 0;
     padding: 0 16px;
     background: var(--color-sidebar);
     border-bottom: 1px solid var(--color-border);
-  }
-`
-
-export const MenuButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-text);
-  cursor: pointer;
-
-  &:hover {
-    background: var(--color-accent-hover);
   }
 `
 
@@ -54,17 +36,6 @@ export const HeaderBrand = styled.span`
   color: var(--color-text);
 `
 
-export const Overlay = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-overlay);
-  background: rgba(0, 0, 0, 0.32);
-
-  @media (min-width: ${breakpoints.tabletMin}) {
-    display: none;
-  }
-`
-
 export const Main = styled.main`
   flex: 1;
   min-width: 0;
@@ -72,8 +43,28 @@ export const Main = styled.main`
   padding: 40px 48px;
   overflow-y: auto;
 
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 10px;
+    
+    &:hover {
+      background: #6b7280;
+    }
+  }
+  
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+
   @media (max-width: ${breakpoints.mobileMax}) {
-    padding: 24px 20px;
+    padding: 24px 20px calc(24px + var(--tab-bar-height) + env(safe-area-inset-bottom));
   }
 
   @media (min-width: ${breakpoints.tabletMin}) and (max-width: ${breakpoints.tabletMax}) {

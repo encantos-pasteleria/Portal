@@ -26,7 +26,7 @@ function persist(settings) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
   } catch {
-    // No se pudo guardar la configuración.
+    /* noop */
   }
 }
 

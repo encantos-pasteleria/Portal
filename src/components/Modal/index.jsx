@@ -1,6 +1,14 @@
-import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Overlay, Panel, Header, Title, CloseButton, Body } from './styles.js'
+import {
+  Overlay,
+  Panel,
+  Header,
+  Heading,
+  Title,
+  Subtitle,
+  CloseButton,
+  Body,
+} from './styles.js'
 
 /**
  * Modal accesible renderizado mediante un portal.
@@ -8,39 +16,23 @@ import { Overlay, Panel, Header, Title, CloseButton, Body } from './styles.js'
  * @param {object} props - Propiedades del modal.
  * @param {boolean} props.open - Indica si el modal está visible.
  * @param {string} props.title - Título del modal.
+ * @param {string} [props.description] - Subtítulo descriptivo opcional.
+ * @param {'sm'|'md'|'lg'} [props.size='md'] - Ancho del modal.
  * @param {Function} props.onClose - Callback al cerrar el modal.
  * @param {React.ReactNode} props.children - Contenido del modal.
  * @returns {JSX.Element|null} Modal o null si está cerrado.
  */
-function Modal({ open, title, onClose, children }) {
-  useEffect(() => {
-    if (!open) return undefined
-
-    /**
-     * Cierra el modal al pulsar la tecla Escape.
-     *
-     * @param {KeyboardEvent} event - Evento de teclado.
-     */
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onClose()
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, onClose])
-
+function Modal({ open, title, description, onClose, size = 'md', children }) {
   if (!open) return null
 
   return createPortal(
-    <Overlay onClick={onClose}>
-      <Panel
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(event) => event.stopPropagation()}
-      >
+    <Overlay>
+      <Panel role="dialog" aria-modal="true" aria-label={title} $size={size}>
         <Header>
-          <Title>{title}</Title>
+          <Heading>
+            <Title>{title}</Title>
+            {description && <Subtitle>{description}</Subtitle>}
+          </Heading>
           <CloseButton type="button" onClick={onClose} aria-label="Cerrar">
             <svg
               width="18"

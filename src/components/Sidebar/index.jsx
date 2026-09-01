@@ -1,45 +1,34 @@
-import { menuItems } from '../../navigation/menuItems.js'
-import { SidebarContainer, Brand, CloseButton, Nav, StyledNavLink } from './styles.js'
+import { SidebarContainer, Brand, Nav, FooterLink, StyledNavLink } from './styles.js'
 
 /**
- * Menú lateral de navegación.
+ * Menú lateral de navegación (tablet y escritorio).
  *
  * @param {object} props - Propiedades de la barra lateral.
- * @param {boolean} props.open - Indica si el menú está abierto.
- * @param {Function} props.onClose - Callback al cerrar el menú.
+ * @param {Array} props.items - Elementos de navegación del menú.
+ * @param {object} props.footerLink - Enlace inferior (cambio de sección/layout).
  * @returns {JSX.Element} Barra lateral con enlaces de navegación.
  */
-function Sidebar({ open, onClose }) {
+function Sidebar({ items, footerLink }) {
   return (
-    <SidebarContainer $open={open}>
+    <SidebarContainer>
       <Brand>
         <span>Encantos</span>
-        <CloseButton type="button" onClick={onClose} aria-label="Cerrar menú">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </CloseButton>
       </Brand>
       <Nav>
-        {menuItems.map((item) => (
+        {items.map((item) => (
           <StyledNavLink
             key={item.path}
             to={item.path}
             end={item.end}
-            onClick={onClose}
           >
             {item.label}
           </StyledNavLink>
         ))}
+        {footerLink && (
+          <FooterLink to={footerLink.to} end={footerLink.end}>
+            {footerLink.label}
+          </FooterLink>
+        )}
       </Nav>
     </SidebarContainer>
   )
