@@ -26,6 +26,7 @@ const SUPPLIERS_COLLECTION = 'suppliers'
 const STOCK_MOVEMENTS_COLLECTION = 'stock_movements'
 const PRODUCTIONS_COLLECTION = 'productions'
 const RECIPES_COLLECTION = 'recipes'
+const QUOTATIONS_COLLECTION = 'quotations'
 
 /**
  * Calcula el costo unitario de un ingrediente desde la presentación de un proveedor.
@@ -495,6 +496,128 @@ export async function previewProduction({ recipeId, portions }) {
   return { items, bases, totalCost }
 }
 
+/**
+ * Construye las opciones de proveedor de un ingrediente, ordenadas por costo
+ * unitario ascendente, e indica el proveedor más económico por defecto.
+ */
+function buildSupplierOptions(ingredientId, ingredientMap, purchaseMap, supplierMap) {
+  const supplierOptions = []
+  for (const supplierId of purchaseMap.get(ingredientId) || []) {
+    const supplier = supplierMap.get(supplierId)
+    if (!supplier) continue
+    const cost = supplierUnitCost(supplier, ingredientId, ingredientMap)
+    supplierOptions.push({ supplierId, name: supplier.name, cost })
+  }
+  supplierOptions.sort((a, b) => (a.cost ?? Infinity) - (b.cost ?? Infinity))
+
+  const cheapest = supplierOptions[0]
+  return {
+    supplierOptions,
+    defaultSupplierId: cheapest ? cheapest.supplierId : null,
+    defaultCost: cheapest ? cheapest.cost : null,
+  }
+}
+
+/**
+ * Calcula la vista previa de una cotización compuesta por una o varias recetas.
+ * Agrega los ingredientes de todas las recetas y, para cada uno, ofrece los
+ * proveedores que lo venden con su costo unitario (misma estructura que
+ * `previewProduction`).
+ *
+ * @param {{ items: Array<{ recipeId: string, quantity: number }> }} data - Recetas y cantidades.
+ * @returns {Promise<{
+ *   items: Array<object>,
+ *   bases: Array<object>,
+ *   recipes: Array<{ recipeId: string, name: string, quantity: number, totalCost: number }>,
+ *   totalCost: number,
+ * }>} Vista previa de la cotización.
+ */
+export async function previewQuotation({ items }) {
+  const lines = Array.isArray(items) ? items : []
+  const { ingredientMap, baseMap, suppliers } = await loadProductionData()
+
+  const aggregated = new Map()
+  const recipes = []
+  const bases = []
+  const consumed = new Set()
+
+  for (const line of lines) {
+    const recipeSnap = await getDoc(doc(db, RECIPES_COLLECTION, line.recipeId))
+    if (!recipeSnap.exists()) continue
+
+    const recipe = recipeSnap.data()
+    const scale = (Number(line.quantity) || 0) / (recipe.portions || 1)
+
+    const totals = computeIngredientTotals(recipe, baseMap, scale)
+    const recipeIngredients = []
+    for (const [ingredientId, quantity] of totals) {
+      aggregated.set(ingredientId, (aggregated.get(ingredientId) || 0) + quantity)
+      recipeIngredients.push({ ingredientId, quantity })
+    }
+
+    for (const baseItem of recipe.items || []) {
+      const base = baseMap.get(String(baseItem.baseId))
+      if (!base) continue
+
+      const factor = (baseItem.quantity || 0) / (base.portions || 1)
+      const baseIngredients = []
+      for (const [ingredientId, quantity] of Object.entries(base.ingredients || {})) {
+        if (!ingredientMap.has(String(ingredientId))) continue
+        baseIngredients.push({
+          ingredientId: String(ingredientId),
+          quantity: Number(quantity) * factor * scale,
+        })
+      }
+
+      if (!consumed.has(String(baseItem.baseId))) {
+        consumed.add(String(baseItem.baseId))
+        bases.push({ baseId: String(baseItem.baseId), name: base.name, ingredients: baseIngredients })
+      }
+    }
+
+    recipes.push({
+      recipeId: String(line.recipeId),
+      name: recipe.name,
+      quantity: Number(line.quantity) || 0,
+      ingredients: recipeIngredients,
+      percentages: (recipe.percentages ?? []).map((percentage) => ({
+        name: percentage.name,
+        value: Number(percentage.value) || 0,
+      })),
+    })
+  }
+
+  const purchaseMap = await getSupplierPurchaseMap([...aggregated.keys()])
+  const supplierMap = new Map(suppliers.map((supplier) => [String(supplier.id), supplier]))
+
+  const previewItems = []
+  for (const [ingredientId, quantity] of aggregated) {
+    const ingredient = ingredientMap.get(ingredientId)
+    if (!ingredient) continue
+
+    const { supplierOptions, defaultSupplierId } = buildSupplierOptions(
+      ingredientId,
+      ingredientMap,
+      purchaseMap,
+      supplierMap,
+    )
+
+    previewItems.push({
+      ingredientId,
+      ingredientName: ingredient.name,
+      quantity,
+      unit: ingredient.unit,
+      available: ingredient.stock || 0,
+      supplierOptions,
+      defaultSupplierId,
+    })
+  }
+
+  const percentages = recipes.length === 1 ? recipes[0].percentages : []
+
+  return { items: previewItems, bases, recipes, percentages }
+}
+
 function computeProductionSteps(recipe, baseMap, ingredientMap, scale) {
   const steps = []
   const consumedIngredients = new Set()
@@ -899,6 +1022,193 @@ export async function updateRecipe(id, data) {
 
 export async function updateRecipeActive(id, active) {
   const docRef = doc(db, RECIPES_COLLECTION, id)
+  await updateDoc(docRef, {
+    active,
+    updatedAt: serverTimestamp(),
+  })
+  const updatedDoc = await getDoc(docRef)
+  return mapDoc(updatedDoc)
+}
+
+export async function getQuotations(active, cursor = null) {
+  const constraints = [
+    where('active', '==', active),
+    limit(PAGE_SIZE + 1),
+  ]
+  if (cursor) constraints.push(startAfter(cursor))
+  const q = query(collection(db, QUOTATIONS_COLLECTION), ...constraints)
+  const snapshot = await getDocs(q)
+  const docs = snapshot.docs
+  const hasMore = docs.length > PAGE_SIZE
+  const items = docs.slice(0, PAGE_SIZE).map(mapDoc)
+  const lastDoc = docs.length > 0 ? docs[Math.min(PAGE_SIZE, docs.length) - 1] : null
+  return { items, lastDoc, hasMore }
+}
+
+export async function countQuotations(active) {
+  const q = query(collection(db, QUOTATIONS_COLLECTION), where('active', '==', active))
+  const snapshot = await getCountFromServer(q)
+  return snapshot.data().count
+}
+
+export async function getAllQuotations() {
+  const snapshot = await getDocs(collection(db, QUOTATIONS_COLLECTION))
+  return snapshot.docs.map(mapDoc)
+}
+
+export async function getQuotation(id) {
+  const docSnap = await getDoc(doc(db, QUOTATIONS_COLLECTION, id))
+  if (!docSnap.exists()) throw new Error('Cotización no encontrada')
+  return mapDoc(docSnap)
+}
+
+export async function createQuotation(data) {
+  const docRef = await addDoc(collection(db, QUOTATIONS_COLLECTION), {
+    ...data,
+    active: true,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  const newDoc = await getDoc(docRef)
+  return mapDoc(newDoc)
+}
+
+/**
+ * Aplica los porcentajes de una receta sobre su subtotal, devolviendo el
+ * detalle de cada porcentaje y el factor total. Misma lógica que producción
+ * (`computeFinalCost`) y que `computeRecipeCost`.
+ *
+ * @param {object} recipe - Receta con `percentages`.
+ * @param {number} subtotal - Costo base de los ingredientes de la receta.
+ * @returns {{ percentages: Array<object>, percentageSum: number, total: number }} Detalle y total.
+ */
+function applyRecipePercentages(recipe, subtotal) {
+  const percentages = (recipe?.percentages ?? []).map((percentage) => {
+    const value = Number(percentage.value) || 0
+    return {
+      name: percentage.name,
+      value,
+      amount: round((subtotal * value) / 100),
+    }
+  })
+  const percentageSum = percentages.reduce((sum, percentage) => sum + percentage.value, 0)
+  return {
+    percentages,
+    percentageSum,
+    total: round(subtotal * (1 + percentageSum / 100)),
+  }
+}
+
+/**
+ * Calcula el costo de una cotización a partir de las recetas y los proveedores
+ * seleccionados. Agrega los ingredientes para el detalle por proveedor, pero
+ * aplica los porcentajes de cada receta sobre su propio subtotal (misma
+ * estructura de precios que una producción).
+ *
+ * @param {Array<{ recipeId: string, quantity: number }>} lines - Recetas y cantidades.
+ * @param {object} [supplierSelections={}] - Mapa de id de ingrediente a id de proveedor.
+ * @param {Array<{ name: string, value: number }>} [quotationPercentages=[]] - Porcentajes propios de la cotización.
+ * @returns {Promise<{
+ *   items: Array<object>,
+ *   recipes: Array<{ recipeId: string, name: string, quantity: number, subtotal: number, percentages: Array<object>, total: number }>,
+ *   subtotal: number,
+ *   percentages: Array<object>,
+ *   totalCost: number,
+ * }>} Detalle y total.
+ */
+export async function computeQuotationCost(
+  lines,
+  supplierSelections = {},
+  quotationPercentages = [],
+) {
+  const { ingredientMap, baseMap, suppliers } = await loadProductionData()
+  const supplierMap = new Map(suppliers.map((supplier) => [String(supplier.id), supplier]))
+
+  const aggregated = new Map()
+  const recipes = []
+
+  for (const line of lines || []) {
+    const recipeSnap = await getDoc(doc(db, RECIPES_COLLECTION, line.recipeId))
+    if (!recipeSnap.exists()) continue
+    const recipe = recipeSnap.data()
+    const scale = (Number(line.quantity) || 0) / (recipe.portions || 1)
+    const totals = computeIngredientTotals(recipe, baseMap, scale)
+
+    let recipeSubtotal = 0
+    for (const [ingredientId, quantity] of totals) {
+      aggregated.set(ingredientId, (aggregated.get(ingredientId) || 0) + quantity)
+
+      const ingredient = ingredientMap.get(ingredientId)
+      if (!ingredient) continue
+      const supplierId = supplierSelections[String(ingredientId)] ?? null
+      const supplier = supplierId ? supplierMap.get(String(supplierId)) : null
+      const unitCost = supplier ? supplierUnitCost(supplier, ingredientId, ingredientMap) : null
+      if (unitCost != null) recipeSubtotal += unitCost * quantity
+    }
+
+    recipeSubtotal = round(recipeSubtotal)
+    const { percentages, total } = applyRecipePercentages(recipe, recipeSubtotal)
+    recipes.push({
+      recipeId: String(line.recipeId),
+      name: recipe.name,
+      quantity: Number(line.quantity) || 0,
+      subtotal: recipeSubtotal,
+      percentages,
+      total,
+    })
+  }
+
+  const items = []
+  for (const [ingredientId, quantity] of aggregated) {
+    const ingredient = ingredientMap.get(ingredientId)
+    if (!ingredient) continue
+
+    const supplierId = supplierSelections[String(ingredientId)] ?? null
+    const supplier = supplierId ? supplierMap.get(String(supplierId)) : null
+    const unitCost = supplier ? supplierUnitCost(supplier, ingredientId, ingredientMap) : null
+    const itemCost = unitCost != null ? unitCost * quantity : 0
+
+    items.push({
+      ingredientId,
+      ingredientName: ingredient.name,
+      quantity,
+      unit: ingredient.unit,
+      cost: round(itemCost),
+      unitCost,
+      supplierId: supplierId ?? null,
+      supplierName: supplier?.name ?? null,
+    })
+  }
+
+  const subtotal = round(items.reduce((sum, item) => sum + item.cost, 0))
+  const recipesTotal = round(recipes.reduce((sum, recipe) => sum + recipe.total, 0))
+
+  const percentages = (quotationPercentages ?? []).map((percentage) => {
+    const value = Number(percentage.value) || 0
+    return {
+      name: percentage.name,
+      value,
+      amount: round((recipesTotal * value) / 100),
+    }
+  })
+  const percentageSum = percentages.reduce((sum, percentage) => sum + percentage.value, 0)
+  const totalCost = round(recipesTotal * (1 + percentageSum / 100))
+
+  return { items, recipes, subtotal, recipesTotal, percentages, totalCost }
+}
+
+export async function updateQuotation(id, data) {
+  const docRef = doc(db, QUOTATIONS_COLLECTION, id)
+  await updateDoc(docRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  })
+  const updatedDoc = await getDoc(docRef)
+  return mapDoc(updatedDoc)
+}
+
+export async function updateQuotationActive(id, active) {
+  const docRef = doc(db, QUOTATIONS_COLLECTION, id)
   await updateDoc(docRef, {
     active,
     updatedAt: serverTimestamp(),

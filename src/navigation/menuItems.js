@@ -3,6 +3,7 @@ export const operationalMenu = {
     { path: '/', label: 'Inicio', end: true, icon: 'home' },
     { path: '/compras', label: 'Compras', icon: 'cart' },
     { path: '/produccion', label: 'Producción', icon: 'factory' },
+    { path: '/cotizaciones', label: 'Cotizaciones', icon: 'quote' },
   ],
   footerLink: { to: '/catalogo', label: 'Parámetros', icon: 'grid' },
 }

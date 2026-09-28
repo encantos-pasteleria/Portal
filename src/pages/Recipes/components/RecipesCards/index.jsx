@@ -1,4 +1,5 @@
 import Switch from '../../../../components/Switch/index.jsx'
+import { formatCurrency } from '../../../../utils/format.js'
 import {
   Grid,
   Card,
@@ -18,6 +19,12 @@ import {
   PercentSection,
   PercentChips,
   PercentChip,
+  CostSection,
+  CostRow,
+  CostLabel,
+  CostValue,
+  CostTotal,
+  CostSub,
   EditButton,
 } from './styles.js'
 
@@ -27,6 +34,7 @@ import {
  * @param {object} props - Propiedades de la vista.
  * @param {Array} props.items - Recetas a mostrar.
  * @param {Map} props.baseMap - Mapa de id de base a objeto.
+ * @param {Map} props.costMap - Mapa de id de receta a costeo calculado.
  * @param {Function} props.onEdit - Callback al editar.
  * @param {Function} props.onToggleActive - Callback al activar/desactivar.
  * @param {string|number|null} props.togglingId - Id de la receta en proceso de cambio.
@@ -35,6 +43,7 @@ import {
 function RecipesCards({
   items,
   baseMap,
+  costMap,
   onEdit,
   onToggleActive,
   togglingId,
@@ -45,6 +54,7 @@ function RecipesCards({
         const initial = item.name ? item.name.charAt(0) : '?'
         const bases = item.items ?? []
         const percentages = item.percentages ?? []
+        const cost = costMap?.get(String(item.id)) ?? null
 
         return (
           <Card key={item.id ?? item.name} $inactive={!item.active}>
@@ -94,6 +104,37 @@ function RecipesCards({
                   ))}
                 </PercentChips>
               </PercentSection>
+            )}
+
+            {cost && (
+              <CostSection>
+                <SectionLabel>Costeo</SectionLabel>
+                <CostRow>
+                  <CostLabel>Subtotal bases</CostLabel>
+                  <CostValue>{formatCurrency(cost.subtotal)}</CostValue>
+                </CostRow>
+                {cost.percentages.map((percentage) => (
+                  <CostRow key={`${percentage.name}-${percentage.value}`}>
+                    <CostLabel>
+                      {percentage.name} ({percentage.value}%)
+                    </CostLabel>
+                    <CostValue>{formatCurrency(percentage.amount)}</CostValue>
+                  </CostRow>
+                ))}
+                <CostTotal>
+                  <CostLabel>Costo total</CostLabel>
+                  <CostValue>{formatCurrency(cost.total)}</CostValue>
+                </CostTotal>
+                {item.portions != null && (
+                  <CostSub>
+                    {cost.perPortion != null
+                      ? `${formatCurrency(cost.perPortion)} por porción · `
+                      : ''}
+                    rinde {item.portions} {item.portions === 1 ? 'porción' : 'porciones'}
+                  </CostSub>
+                )}
+                {!cost.hasCost && <CostSub>Sin costos de proveedor registrados</CostSub>}
+              </CostSection>
             )}
 
             <EditButton type="button" onClick={() => onEdit(item)}>

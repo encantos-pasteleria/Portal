@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useDebounce, useToggle } from '@uidotdev/usehooks'
 import { useRecipesStore } from '../../hooks/useRecipes.js'
 import { useBasesStore } from '../../hooks/useBases.js'
+import { useIngredientsStore } from '../../hooks/useIngredients.js'
+import { useSuppliersStore } from '../../hooks/useSuppliers.js'
 import { createRecipe, updateRecipe, updateRecipeActive } from '../../services/recipes.js'
 import { normalizeText } from '../../utils/format.js'
+import { computeRecipeCost } from '../../utils/recipes.js'
 import RecipesToolbar from './components/RecipesToolbar/index.jsx'
 import RecipesCards from './components/RecipesCards/index.jsx'
 import RecipeForm from './components/RecipeForm/index.jsx'
@@ -41,20 +44,48 @@ function Recipes() {
   const allBases = useBasesStore((state) => state.allItems)
   const loadAllBases = useBasesStore((state) => state.loadAll)
 
+  const allIngredients = useIngredientsStore((state) => state.allItems)
+  const loadAllIngredients = useIngredientsStore((state) => state.loadAll)
+
+  const suppliers = useSuppliersStore((state) => state.allItems)
+  const loadAllSuppliers = useSuppliersStore((state) => state.loadAll)
+
   const debouncedSearch = useDebounce(search, 250)
 
   useEffect(() => {
     const loadAll = async () => {
-      await Promise.all([load(), loadAllBases()])
+      await Promise.all([load(), loadAllBases(), loadAllIngredients(), loadAllSuppliers()])
     }
     loadAll()
-  }, [active, load, loadAllBases])
+  }, [active, load, loadAllBases, loadAllIngredients, loadAllSuppliers])
 
   const baseMap = useMemo(() => {
     const map = new Map()
     allBases.forEach((base) => map.set(String(base.id), base))
     return map
   }, [allBases])
+
+  const ingredientMap = useMemo(() => {
+    const map = new Map()
+    allIngredients.forEach((ingredient) => map.set(String(ingredient.id), ingredient))
+    return map
+  }, [allIngredients])
+
+  /**
+   * Costeo de cada receta visible según las bases y sus porcentajes.
+   *
+   * @type {Map<string, object>}
+   */
+  const costMap = useMemo(() => {
+    const map = new Map()
+    items.forEach((item) => {
+      map.set(
+        String(item.id),
+        computeRecipeCost(item, { baseMap, ingredientMap, suppliers }),
+      )
+    })
+    return map
+  }, [items, baseMap, ingredientMap, suppliers])
 
   const filtered = useMemo(() => {
     const query = normalizeText(debouncedSearch.trim())
@@ -191,6 +222,7 @@ function Recipes() {
         <RecipesCards
           items={pageItems}
           baseMap={baseMap}
+          costMap={costMap}
           onEdit={openEditModal}
           onToggleActive={handleToggleActive}
           togglingId={togglingId}

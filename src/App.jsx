@@ -9,6 +9,7 @@ import Recipes from './pages/Recipes/index.jsx'
 import Purchases from './pages/Purchases/index.jsx'
 import Production from './pages/Production/index.jsx'
 import ProductionDetail from './pages/Production/components/ProductionDetail/index.jsx'
+import Quotations from './pages/Quotations/index.jsx'
 
 /**
  * Componente raíz de la aplicación.
@@ -24,6 +25,7 @@ function App() {
           <Route path="compras" element={<Purchases />} />
           <Route path="produccion" element={<Production />} />
           <Route path="produccion/:id" element={<ProductionDetail />} />
+          <Route path="cotizaciones" element={<Quotations />} />
         </Route>
         <Route path="catalogo" element={<AppLayout variant="catalog" />}>
           <Route index element={<Navigate to="ingredientes" replace />} />

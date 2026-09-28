@@ -69,6 +69,9 @@ export const CardName = styled.h3`
   font-weight: 700;
   line-height: 1.3;
   letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `
 
 export const StatusBadge = styled.span`
@@ -90,7 +93,36 @@ export const StatusBadge = styled.span`
   }
 `
 
-export const BasesSection = styled.div`
+export const ClientInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 12px;
+`
+
+export const ContactRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  min-width: 0;
+
+  & > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`
+
+export const Notes = styled.p`
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+`
+
+export const RecipesSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -105,12 +137,12 @@ export const SectionLabel = styled.span`
   color: var(--color-text-muted);
 `
 
-export const BaseList = styled.div`
+export const RecipeList = styled.div`
   display: flex;
   flex-direction: column;
 `
 
-export const BaseRow = styled.div`
+export const RecipeRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -123,7 +155,7 @@ export const BaseRow = styled.div`
   }
 `
 
-export const BaseName = styled.span`
+export const RecipeName = styled.span`
   font-size: 12px;
   color: var(--color-text);
   white-space: nowrap;
@@ -133,7 +165,7 @@ export const BaseName = styled.span`
   flex: 1;
 `
 
-export const BaseAmount = styled.span`
+export const RecipeAmount = styled.span`
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-muted);
@@ -141,34 +173,55 @@ export const BaseAmount = styled.span`
   font-variant-numeric: tabular-nums;
 `
 
-export const EmptyBases = styled.span`
+export const EmptyRecipes = styled.span`
   font-size: 13px;
   color: var(--color-text-muted);
   padding: 4px 0;
 `
 
 export const PercentSection = styled.div`
-  margin-top: 8px;
-`
-
-export const PercentChips = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
+  margin-top: 12px;
 `
 
-export const PercentChip = styled.span`
-  display: inline-flex;
+export const PercentList = styled.div`
+  display: flex;
+  flex-direction: column;
+`
+
+export const PercentLine = styled.div`
+  display: flex;
   align-items: center;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--color-warning-soft);
-  color: var(--color-warning);
-  font-size: 11px;
-  font-weight: 600;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
 `
 
-export const CostSection = styled.div`
+export const PercentLabel = styled.span`
+  font-size: 12px;
+  color: var(--color-text-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
+export const PercentValue = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-warning);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+`
+
+export const CostList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -179,53 +232,59 @@ export const CostSection = styled.div`
   background: var(--color-bg);
 `
 
-export const CostRow = styled.div`
+export const CostLine = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  font-size: 12px;
 `
 
-export const CostLabel = styled.span`
-  font-size: 12px;
-  color: var(--color-text-muted);
+export const CostName = styled.span`
+  color: var(--color-text);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 `
 
-export const CostValue = styled.span`
-  font-size: 12px;
+export const CostSupplier = styled.span`
+  color: var(--color-text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+`
+
+export const CostAmount = styled.span`
   font-weight: 600;
   color: var(--color-text);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 `
 
-export const CostTotal = styled.div`
+export const Total = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-top: 4px;
-  padding-top: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--color-border);
-
-  ${CostLabel} {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--color-text);
-  }
-
-  ${CostValue} {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--color-accent);
-  }
 `
 
-export const CostSub = styled.span`
+export const TotalLabel = styled.span`
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+`
+
+export const TotalValue = styled.span`
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+`
+
+export const TotalSub = styled.span`
   font-size: 11px;
   color: var(--color-text-muted);
 `
