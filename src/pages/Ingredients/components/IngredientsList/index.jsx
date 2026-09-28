@@ -11,10 +11,12 @@ import { List, Row, Main, Name, Meta, Info, StockText, Actions } from './styles.
  * @param {Array} props.items - Ingredientes a mostrar.
  * @param {Function} props.onEdit - Callback al editar un ingrediente.
  * @param {Function} props.onToggleActive - Callback al activar/desactivar.
+ * @param {Function} props.onDelete - Callback al eliminar un ingrediente.
  * @param {string|number|null} props.togglingId - Id del ingrediente en proceso de cambio.
+ * @param {string|number|null} props.deletingId - Id del ingrediente en proceso de borrado.
  * @returns {JSX.Element} Lista de ingredientes.
  */
-function IngredientsList({ items, onEdit, onToggleActive, togglingId }) {
+function IngredientsList({ items, onEdit, onToggleActive, onDelete, togglingId, deletingId }) {
   return (
     <List>
       {items.map((item) => (
@@ -30,6 +32,13 @@ function IngredientsList({ items, onEdit, onToggleActive, togglingId }) {
           <Actions>
             <Button variant="ghost" onClick={() => onEdit(item)}>
               Editar
+            </Button>
+            <Button
+              variant="danger"
+              disabled={deletingId === item.id}
+              onClick={() => onDelete(item)}
+            >
+              Eliminar
             </Button>
             <Switch
               checked={item.active}

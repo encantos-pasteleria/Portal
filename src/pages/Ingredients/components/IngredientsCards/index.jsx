@@ -20,6 +20,7 @@ import {
   DetailLabel,
   DetailValue,
   CardFooter,
+  FooterActions,
 } from './styles.js'
 
 /**
@@ -29,10 +30,12 @@ import {
  * @param {Array} props.items - Ingredientes a mostrar.
  * @param {Function} props.onEdit - Callback al editar un ingrediente.
  * @param {Function} props.onToggleActive - Callback al activar/desactivar.
+ * @param {Function} props.onDelete - Callback al eliminar un ingrediente.
  * @param {string|number|null} props.togglingId - Id del ingrediente en proceso de cambio.
+ * @param {string|number|null} props.deletingId - Id del ingrediente en proceso de borrado.
  * @returns {JSX.Element} Rejilla de tarjetas de ingredientes.
  */
-function IngredientsCards({ items, onEdit, onToggleActive, togglingId }) {
+function IngredientsCards({ items, onEdit, onToggleActive, onDelete, togglingId, deletingId }) {
   return (
     <Grid>
       {items.map((item) => {
@@ -69,11 +72,20 @@ function IngredientsCards({ items, onEdit, onToggleActive, togglingId }) {
               <Button variant="ghost" onClick={() => onEdit(item)}>
                 Editar
               </Button>
-              <Switch
-                checked={item.active}
-                disabled={togglingId === item.id}
-                onChange={(active) => onToggleActive(item, active)}
-              />
+              <FooterActions>
+                <Button
+                  variant="danger"
+                  disabled={deletingId === item.id}
+                  onClick={() => onDelete(item)}
+                >
+                  Eliminar
+                </Button>
+                <Switch
+                  checked={item.active}
+                  disabled={togglingId === item.id}
+                  onChange={(active) => onToggleActive(item, active)}
+                />
+              </FooterActions>
             </CardFooter>
           </Card>
         )

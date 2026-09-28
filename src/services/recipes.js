@@ -5,6 +5,7 @@ import {
   createRecipe as firebaseCreateRecipe,
   updateRecipe as firebaseUpdateRecipe,
   updateRecipeActive as firebaseUpdateRecipeActive,
+  deleteRecipe as firebaseDeleteRecipe,
 } from '../firebase/firestore.js'
 
 export function listRecipes(active, cursor) {
@@ -30,4 +31,8 @@ export function updateRecipe(data) {
 
 export function updateRecipeActive(id, active) {
   return firebaseUpdateRecipeActive(id, active)
+}
+
+export function deleteRecipe(id) {
+  return firebaseDeleteRecipe(id)
 }

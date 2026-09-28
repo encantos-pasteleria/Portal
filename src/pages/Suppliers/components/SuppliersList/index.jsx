@@ -1,5 +1,6 @@
 import { getIngredientEntries } from '../../../../utils/suppliers.js'
 import Switch from '../../../../components/Switch/index.jsx'
+import Button from '../../../../components/Button/index.jsx'
 import {
   List,
   Row,
@@ -29,9 +30,19 @@ import {
  * @param {Function} props.onToggleActive - Callback al activar/desactivar.
  * @param {string|number|null} props.togglingId - Id del proveedor en proceso de cambio.
  * @param {Function} props.onViewDetail - Callback al ver detalles.
+ * @param {Function} props.onDelete - Callback al eliminar un proveedor.
+ * @param {string|number|null} props.deletingId - Id del proveedor en proceso de borrado.
  * @returns {JSX.Element} Lista de proveedores.
  */
-function SuppliersList({ items, ingredientNames, onToggleActive, togglingId, onViewDetail }) {
+function SuppliersList({
+  items,
+  ingredientNames,
+  onToggleActive,
+  togglingId,
+  onViewDetail,
+  onDelete,
+  deletingId,
+}) {
   return (
     <List>
       {items.map((item) => {
@@ -68,6 +79,13 @@ function SuppliersList({ items, ingredientNames, onToggleActive, togglingId, onV
               <DetailButton type="button" onClick={() => onViewDetail(item)}>
                 Detalles
               </DetailButton>
+              <Button
+                variant="danger"
+                disabled={deletingId === item.id}
+                onClick={() => onDelete(item)}
+              >
+                Eliminar
+              </Button>
               <Switch
                 checked={item.active}
                 disabled={togglingId === item.id}

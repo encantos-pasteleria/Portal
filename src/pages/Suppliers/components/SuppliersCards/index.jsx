@@ -26,6 +26,7 @@ import {
   StatValue,
   StatLabel,
   DetailButton,
+  DeleteButton,
 } from './styles.js'
 
 /**
@@ -38,9 +39,19 @@ import {
  * @param {Function} props.onToggleActive - Callback al activar/desactivar.
  * @param {string|number|null} props.togglingId - Id del proveedor en proceso de cambio.
  * @param {Function} props.onViewDetail - Callback al ver detalles.
+ * @param {Function} props.onDelete - Callback al eliminar un proveedor.
+ * @param {string|number|null} props.deletingId - Id del proveedor en proceso de borrado.
  * @returns {JSX.Element} Rejilla de tarjetas de proveedores.
  */
-function SuppliersCards({ items, ingredientNames, onToggleActive, togglingId, onViewDetail }) {
+function SuppliersCards({
+  items,
+  ingredientNames,
+  onToggleActive,
+  togglingId,
+  onViewDetail,
+  onDelete,
+  deletingId,
+}) {
   return (
     <Grid>
       {items.map((item) => {
@@ -135,6 +146,13 @@ function SuppliersCards({ items, ingredientNames, onToggleActive, togglingId, on
                 <polyline points="12 5 19 12 12 19" />
               </svg>
             </DetailButton>
+            <DeleteButton
+              type="button"
+              disabled={deletingId === item.id}
+              onClick={() => onDelete(item)}
+            >
+              Eliminar
+            </DeleteButton>
           </Card>
         )
       })}

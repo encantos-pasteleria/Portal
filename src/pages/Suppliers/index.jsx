@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useDebounce, useToggle } from '@uidotdev/usehooks'
 import { useSuppliersStore } from '../../hooks/useSuppliers.js'
 import { useIngredientsStore } from '../../hooks/useIngredients.js'
-import { createSupplier, updateSupplier, updateSupplierActive } from '../../services/suppliers.js'
+import { createSupplier, updateSupplier, updateSupplierActive, deleteSupplier } from '../../services/suppliers.js'
 import { createIngredient } from '../../services/ingredients.js'
 import { normalizeText } from '../../utils/format.js'
 import SuppliersToolbar from './components/SuppliersToolbar/index.jsx'
@@ -86,6 +86,7 @@ function Suppliers() {
   const [submitting, setSubmitting] = useState(false)
   const [confirmation, setConfirmation] = useState(null)
   const [togglingId, setTogglingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
   const [detailSupplier, setDetailSupplier] = useState(null)
 
   useEffect(() => {
@@ -182,6 +183,29 @@ function Suppliers() {
     }
   }
 
+  /**
+   * Elimina un proveedor y sincroniza con la API.
+   *
+   * @param {object} supplier - Proveedor a eliminar.
+   * @returns {Promise<void>}
+   */
+  const handleDelete = async (supplier) => {
+    setDeletingId(supplier.id)
+
+    try {
+      const { deleted } = await deleteSupplier(supplier.id)
+      if (deleted || active) {
+        removeItem(supplier.id)
+        if (detailSupplier?.id === supplier.id) setDetailSupplier(null)
+      }
+      setConfirmation(deleted ? 'Proveedor eliminado' : 'Proveedor inhabilitado')
+    } catch (error) {
+      setConfirmation(error.message || 'No se pudo eliminar el proveedor')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   let content
 
   if (status === 'loading') {
@@ -226,6 +250,8 @@ function Suppliers() {
             onToggleActive={handleToggleActive}
             togglingId={togglingId}
             onViewDetail={setDetailSupplier}
+            onDelete={handleDelete}
+            deletingId={deletingId}
           />
         ) : (
           <SuppliersList
@@ -234,6 +260,8 @@ function Suppliers() {
             onToggleActive={handleToggleActive}
             togglingId={togglingId}
             onViewDetail={setDetailSupplier}
+            onDelete={handleDelete}
+            deletingId={deletingId}
           />
         )}
         <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
@@ -285,6 +313,8 @@ function Suppliers() {
           onEdit={openEditModal}
           onToggleActive={handleToggleActive}
           togglingId={togglingId}
+          onDelete={handleDelete}
+          deletingId={deletingId}
         />
       )}
 

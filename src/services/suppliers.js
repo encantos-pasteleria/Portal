@@ -5,6 +5,7 @@ import {
   createSupplier as firebaseCreateSupplier,
   updateSupplier as firebaseUpdateSupplier,
   updateSupplierActive as firebaseUpdateSupplierActive,
+  deleteSupplier as firebaseDeleteSupplier,
 } from '../firebase/firestore.js'
 
 export function listSuppliers(active, cursor) {
@@ -30,4 +31,8 @@ export function updateSupplier(data) {
 
 export function updateSupplierActive(id, active) {
   return firebaseUpdateSupplierActive(id, active)
+}
+
+export function deleteSupplier(id) {
+  return firebaseDeleteSupplier(id)
 }

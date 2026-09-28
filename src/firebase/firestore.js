@@ -5,6 +5,7 @@ import {
   getDoc,
   addDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -45,6 +46,26 @@ function supplierUnitCost(supplier, ingredientId, ingredientMap) {
 
 function mapDoc(docSnap) {
   return { id: docSnap.id, ...docSnap.data() }
+}
+
+/** Indica si un ingrediente está referenciado por alguna base. */
+async function isIngredientUsed(ingredientId) {
+  const snapshot = await getDocs(collection(db, BASES_COLLECTION))
+  return snapshot.docs.some((docSnap) => {
+    const ingredients = docSnap.data().ingredients
+    return (
+      ingredients != null &&
+      Object.prototype.hasOwnProperty.call(ingredients, String(ingredientId))
+    )
+  })
+}
+
+/** Indica si una base está referenciada por alguna receta. */
+async function isBaseUsed(baseId) {
+  const snapshot = await getDocs(collection(db, RECIPES_COLLECTION))
+  return snapshot.docs.some((docSnap) =>
+    (docSnap.data().items ?? []).some((item) => String(item.baseId) === String(baseId)),
+  )
 }
 
 /** Carga ingredientes, bases y proveedores para calcular una producción. */
@@ -199,6 +220,25 @@ export async function updateIngredientActive(id, active) {
   return mapDoc(updatedDoc)
 }
 
+/**
+ * Elimina un ingrediente. Si está asociado a alguna base solo lo inhabilita.
+ *
+ * @param {string} id - Id del ingrediente.
+ * @returns {Promise<{ deleted: boolean }>} Resultado: borrado físico o inhabilitado.
+ */
+export async function deleteIngredient(id) {
+  if (await isIngredientUsed(id)) {
+    await updateDoc(doc(db, INGREDIENTS_COLLECTION, id), {
+      active: false,
+      updatedAt: serverTimestamp(),
+    })
+    return { deleted: false }
+  }
+
+  await deleteDoc(doc(db, INGREDIENTS_COLLECTION, id))
+  return { deleted: true }
+}
+
 export async function getBases(active, cursor = null) {
   const constraints = [
     where('active', '==', active),
@@ -256,6 +296,25 @@ export async function updateBaseActive(id, active) {
   return mapDoc(updatedDoc)
 }
 
+/**
+ * Elimina una base. Si está asociada a alguna receta solo la inhabilita.
+ *
+ * @param {string} id - Id de la base.
+ * @returns {Promise<{ deleted: boolean }>} Resultado: borrado físico o inhabilitado.
+ */
+export async function deleteBase(id) {
+  if (await isBaseUsed(id)) {
+    await updateDoc(doc(db, BASES_COLLECTION, id), {
+      active: false,
+      updatedAt: serverTimestamp(),
+    })
+    return { deleted: false }
+  }
+
+  await deleteDoc(doc(db, BASES_COLLECTION, id))
+  return { deleted: true }
+}
+
 export async function getSuppliers(active, cursor = null) {
   const constraints = [
     where('active', '==', active),
@@ -311,6 +370,17 @@ export async function updateSupplierActive(id, active) {
   })
   const updatedDoc = await getDoc(docRef)
   return mapDoc(updatedDoc)
+}
+
+/**
+ * Elimina un proveedor de forma definitiva.
+ *
+ * @param {string} id - Id del proveedor.
+ * @returns {Promise<{ deleted: boolean }>} Resultado del borrado.
+ */
+export async function deleteSupplier(id) {
+  await deleteDoc(doc(db, SUPPLIERS_COLLECTION, id))
+  return { deleted: true }
 }
 
 export async function getStockMovements(cursor = null) {
@@ -519,6 +589,45 @@ function buildSupplierOptions(ingredientId, ingredientMap, purchaseMap, supplier
 }
 
 /**
+ * Construye, para cada ingrediente, el conjunto de proveedores que lo ofrecen
+ * según el catálogo de presentaciones (`ingredientPackaging`) de cada proveedor.
+ * Es la misma fuente que usa el formulario de compras.
+ *
+ * @param {string[]} ingredientIds - Ids de ingredientes a consultar.
+ * @param {Array} suppliers - Proveedores cargados.
+ * @returns {Map<string, Set<string>>} Mapa de id de ingrediente a set de ids de proveedor.
+ */
+function buildCatalogSupplierMap(ingredientIds, suppliers) {
+  const map = new Map()
+  const wanted = new Set(ingredientIds.map(String))
+  if (wanted.size === 0) return map
+
+  for (const supplier of suppliers) {
+    const packaging = supplier.ingredientPackaging ?? {}
+    for (const ingredientId of Object.keys(packaging)) {
+      const key = String(ingredientId)
+      if (!wanted.has(key)) continue
+      if (!map.has(key)) map.set(key, new Set())
+      map.get(key).add(String(supplier.id))
+    }
+  }
+
+  return map
+}
+
+/** Une varios mapas de id de ingrediente a set de ids de proveedor. */
+function mergeSupplierMaps(...maps) {
+  const merged = new Map()
+  for (const map of maps) {
+    for (const [key, values] of map) {
+      if (!merged.has(key)) merged.set(key, new Set())
+      for (const value of values) merged.get(key).add(value)
+    }
+  }
+  return merged
+}
+
+/**
  * Calcula la vista previa de una cotización compuesta por una o varias recetas.
  * Agrega los ingredientes de todas las recetas y, para cada uno, ofrece los
  * proveedores que lo venden con su costo unitario (misma estructura que
@@ -588,6 +697,8 @@ export async function previewQuotation({ items }) {
   }
 
   const purchaseMap = await getSupplierPurchaseMap([...aggregated.keys()])
+  const catalogMap = buildCatalogSupplierMap([...aggregated.keys()], suppliers)
+  const supplierOptionsMap = mergeSupplierMaps(purchaseMap, catalogMap)
   const supplierMap = new Map(suppliers.map((supplier) => [String(supplier.id), supplier]))
 
   const previewItems = []
@@ -598,7 +709,7 @@ export async function previewQuotation({ items }) {
     const { supplierOptions, defaultSupplierId } = buildSupplierOptions(
       ingredientId,
       ingredientMap,
-      purchaseMap,
+      supplierOptionsMap,
       supplierMap,
     )
 
@@ -1030,6 +1141,17 @@ export async function updateRecipeActive(id, active) {
   return mapDoc(updatedDoc)
 }
 
+/**
+ * Elimina una receta de forma definitiva.
+ *
+ * @param {string} id - Id de la receta.
+ * @returns {Promise<{ deleted: boolean }>} Resultado del borrado.
+ */
+export async function deleteRecipe(id) {
+  await deleteDoc(doc(db, RECIPES_COLLECTION, id))
+  return { deleted: true }
+}
+
 export async function getQuotations(active, cursor = null) {
   const constraints = [
     where('active', '==', active),
@@ -1112,8 +1234,10 @@ function applyRecipePercentages(recipe, subtotal) {
  *   items: Array<object>,
  *   recipes: Array<{ recipeId: string, name: string, quantity: number, subtotal: number, percentages: Array<object>, total: number }>,
  *   subtotal: number,
+ *   recipesTotal: number,
  *   percentages: Array<object>,
  *   totalCost: number,
+ *   hasCost: boolean,
  * }>} Detalle y total.
  */
 export async function computeQuotationCost(
@@ -1194,7 +1318,15 @@ export async function computeQuotationCost(
   const percentageSum = percentages.reduce((sum, percentage) => sum + percentage.value, 0)
   const totalCost = round(recipesTotal * (1 + percentageSum / 100))
 
-  return { items, recipes, subtotal, recipesTotal, percentages, totalCost }
+  return {
+    items,
+    recipes,
+    subtotal,
+    recipesTotal,
+    percentages,
+    totalCost,
+    hasCost: items.some((item) => item.unitCost != null),
+  }
 }
 
 export async function updateQuotation(id, data) {
@@ -1215,4 +1347,15 @@ export async function updateQuotationActive(id, active) {
   })
   const updatedDoc = await getDoc(docRef)
   return mapDoc(updatedDoc)
+}
+
+/**
+ * Elimina una cotización de forma definitiva.
+ *
+ * @param {string} id - Id de la cotización.
+ * @returns {Promise<{ deleted: boolean }>} Resultado del borrado.
+ */
+export async function deleteQuotation(id) {
+  await deleteDoc(doc(db, QUOTATIONS_COLLECTION, id))
+  return { deleted: true }
 }

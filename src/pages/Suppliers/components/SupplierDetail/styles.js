@@ -332,6 +332,32 @@ export const EditButton = styled.button`
   }
 `
 
+export const DeleteButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-danger);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-danger-soft);
+    border-color: var(--color-danger);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`
+
 export const ToggleWrap = styled.div`
   display: flex;
   align-items: center;

@@ -33,6 +33,7 @@ import {
   DrawerFooter,
   FooterLeft,
   EditButton,
+  DeleteButton,
   ToggleWrap,
   ToggleLabel,
 } from './styles.js'
@@ -48,6 +49,8 @@ import {
  * @param {Function} props.onEdit - Callback al editar.
  * @param {Function} props.onToggleActive - Callback al activar/desactivar.
  * @param {string|number|null} props.togglingId - Id del proveedor en proceso de cambio.
+ * @param {Function} props.onDelete - Callback al eliminar el proveedor.
+ * @param {string|number|null} props.deletingId - Id del proveedor en proceso de borrado.
  * @returns {JSX.Element|null} Drawer o null.
  */
 function SupplierDetail({
@@ -58,6 +61,8 @@ function SupplierDetail({
   onEdit,
   onToggleActive,
   togglingId,
+  onDelete,
+  deletingId,
 }) {
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -210,6 +215,27 @@ function SupplierDetail({
               </svg>
               Editar
             </EditButton>
+            <DeleteButton
+              type="button"
+              disabled={deletingId === supplier.id}
+              onClick={() => onDelete(supplier)}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              Eliminar
+            </DeleteButton>
           </FooterLeft>
           <ToggleWrap>
             <ToggleLabel>{supplier.active ? 'Activo' : 'Inactivo'}</ToggleLabel>

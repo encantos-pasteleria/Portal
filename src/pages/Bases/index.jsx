@@ -3,7 +3,7 @@ import { useDebounce, useToggle } from '@uidotdev/usehooks'
 import { useBasesStore } from '../../hooks/useBases.js'
 import { useIngredientsStore } from '../../hooks/useIngredients.js'
 import { useSuppliersStore } from '../../hooks/useSuppliers.js'
-import { createBase, updateBase, updateBaseActive } from '../../services/bases.js'
+import { createBase, updateBase, updateBaseActive, deleteBase } from '../../services/bases.js'
 import { normalizeText } from '../../utils/format.js'
 import BasesToolbar from './components/BasesToolbar/index.jsx'
 import BasesCards from './components/BasesCards/index.jsx'
@@ -86,6 +86,7 @@ function Bases() {
   const [submitting, setSubmitting] = useState(false)
   const [confirmation, setConfirmation] = useState(null)
   const [togglingId, setTogglingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     if (!confirmation) return undefined
@@ -169,6 +170,33 @@ function Bases() {
     }
   }
 
+  /**
+   * Elimina una base. Si está asociada a una receta, la inhabilita.
+   *
+   * @param {object} base - Base a eliminar.
+   * @returns {Promise<void>}
+   */
+  const handleDelete = async (base) => {
+    setDeletingId(base.id)
+
+    try {
+      const { deleted } = await deleteBase(base.id)
+      if (deleted || active) {
+        removeItem(base.id)
+        if (detailBase?.id === base.id) setDetailBase(null)
+      }
+      setConfirmation(
+        deleted
+          ? 'Base eliminada'
+          : 'Base inhabilitada porque está asociada a una receta',
+      )
+    } catch (error) {
+      setConfirmation(error.message || 'No se pudo eliminar la base')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   let content
 
   if (status === 'loading') {
@@ -212,6 +240,8 @@ function Bases() {
             ingredientMap={ingredientMap}
             onViewDetail={setDetailBase}
             onViewCost={setCostBase}
+            onDelete={handleDelete}
+            deletingId={deletingId}
           />
         ) : (
           <BasesList
@@ -220,6 +250,8 @@ function Bases() {
             togglingId={togglingId}
             onViewDetail={setDetailBase}
             onViewCost={setCostBase}
+            onDelete={handleDelete}
+            deletingId={deletingId}
           />
         )}
         <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
@@ -271,6 +303,8 @@ function Bases() {
         onEdit={openEditModal}
         onToggleActive={handleToggleActive}
         togglingId={togglingId}
+        onDelete={handleDelete}
+        deletingId={deletingId}
       />
 
       <BaseCostModal

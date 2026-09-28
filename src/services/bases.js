@@ -5,6 +5,7 @@ import {
   createBase as firebaseCreateBase,
   updateBase as firebaseUpdateBase,
   updateBaseActive as firebaseUpdateBaseActive,
+  deleteBase as firebaseDeleteBase,
 } from '../firebase/firestore.js'
 
 export function listBases(active, cursor) {
@@ -30,4 +31,8 @@ export function updateBase(data) {
 
 export function updateBaseActive(id, active) {
   return firebaseUpdateBaseActive(id, active)
+}
+
+export function deleteBase(id) {
+  return firebaseDeleteBase(id)
 }

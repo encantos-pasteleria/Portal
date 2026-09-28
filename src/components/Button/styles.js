@@ -28,6 +28,16 @@ const variantStyles = {
       background: var(--color-accent-soft);
     }
   `,
+  danger: `
+    padding: 6px 10px;
+    background: transparent;
+    color: var(--color-danger);
+    font-size: 13px;
+
+    &:hover:not(:disabled) {
+      background: var(--color-danger-soft);
+    }
+  `,
 }
 
 export const StyledButton = styled.button`

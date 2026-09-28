@@ -1,5 +1,4 @@
 import { formatCurrency, formatDate } from './format.js'
-import { formatAmount } from './units.js'
 
 /** Escapa caracteres especiales para insertarlos de forma segura en HTML. */
 function escapeHtml(value) {
@@ -46,7 +45,7 @@ function buildRecipesSummary(costRecipes) {
           <table class="table">
             <tbody>
               <tr>
-                <td>Subtotal ingredientes</td>
+                <td>Subtotal recetas</td>
                 <td class="num">${formatCurrency(recipe.subtotal)}</td>
               </tr>
               ${percentageRow}
@@ -64,44 +63,6 @@ function buildRecipesSummary(costRecipes) {
     <section class="section">
       <h2>Costos por receta</h2>
       ${blocks}
-    </section>`
-}
-
-/**
- * Construye el bloque HTML del detalle de costos por ingrediente.
- *
- * @param {Array<object>} costItems - Ingredientes costeados de la cotización.
- * @returns {string} HTML del detalle por ingrediente.
- */
-function buildIngredientsDetail(costItems) {
-  if (!Array.isArray(costItems) || costItems.length === 0) return ''
-
-  const rows = costItems
-    .map(
-      (item) => `
-        <tr>
-          <td>${escapeHtml(item.ingredientName)}</td>
-          <td>${escapeHtml(item.supplierName ?? 'Sin proveedor')}</td>
-          <td class="num">${escapeHtml(formatAmount(item.quantity, item.unit))}</td>
-          <td class="num">${formatCurrency(item.cost)}</td>
-        </tr>`,
-    )
-    .join('')
-
-  return `
-    <section class="section">
-      <h2>Detalle por ingrediente</h2>
-      <table class="table table-bordered">
-        <thead>
-          <tr>
-            <th>Ingrediente</th>
-            <th>Proveedor</th>
-            <th class="num">Cantidad</th>
-            <th class="num">Costo</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
     </section>`
 }
 
@@ -144,7 +105,6 @@ function buildQuotationPercentages(percentages) {
 export function buildQuotationDocument(quotation) {
   const recipes = quotation.items ?? []
   const costRecipes = quotation.costRecipes ?? []
-  const costItems = quotation.costItems ?? []
   const quotationPercentages =
     (quotation.quotationCostPercentages ?? []).length > 0
       ? quotation.quotationCostPercentages
@@ -353,7 +313,6 @@ export function buildQuotationDocument(quotation) {
     </section>
 
     ${buildRecipesSummary(costRecipes)}
-    ${buildIngredientsDetail(costItems)}
     ${buildQuotationPercentages(quotationPercentages)}
 
     <div class="total">

@@ -1,4 +1,5 @@
 import Switch from '../../../../components/Switch/index.jsx'
+import Button from '../../../../components/Button/index.jsx'
 import { formatCurrency, formatDate } from '../../../../utils/format.js'
 import {
   Grid,
@@ -36,6 +37,7 @@ import {
   CardActions,
   EditButton,
   ExportButton,
+  HeaderActions,
 } from './styles.js'
 
 /**
@@ -48,6 +50,8 @@ import {
  * @param {Function} props.onExport - Callback al exportar a PDF.
  * @param {Function} props.onToggleActive - Callback al activar/desactivar.
  * @param {string|number|null} props.togglingId - Id de la cotización en proceso de cambio.
+ * @param {Function} props.onDelete - Callback al eliminar una cotización.
+ * @param {string|number|null} props.deletingId - Id de la cotización en proceso de borrado.
  * @returns {JSX.Element} Rejilla de tarjetas de cotizaciones.
  */
 function QuotationsCards({
@@ -57,6 +61,8 @@ function QuotationsCards({
   onExport,
   onToggleActive,
   togglingId,
+  onDelete,
+  deletingId,
 }) {
   const recipeMap = new Map(allRecipes.map((recipe) => [String(recipe.id), recipe]))
 
@@ -97,11 +103,20 @@ function QuotationsCards({
                   </StatusBadge>
                 </CardInfo>
               </HeaderLeft>
-              <Switch
-                checked={item.active}
-                disabled={togglingId === item.id}
-                onChange={(active) => onToggleActive(item, active)}
-              />
+              <HeaderActions>
+                <Button
+                  variant="danger"
+                  disabled={deletingId === item.id}
+                  onClick={() => onDelete(item)}
+                >
+                  Eliminar
+                </Button>
+                <Switch
+                  checked={item.active}
+                  disabled={togglingId === item.id}
+                  onChange={(active) => onToggleActive(item, active)}
+                />
+              </HeaderActions>
             </CardHeader>
 
             <ClientInfo>

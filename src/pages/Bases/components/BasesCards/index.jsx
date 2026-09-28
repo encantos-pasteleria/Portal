@@ -23,6 +23,7 @@ import {
   StatLabel,
   DetailButton,
   CostButton,
+  DeleteButton,
 } from './styles.js'
 
 /**
@@ -33,9 +34,11 @@ import {
  * @param {Map} props.ingredientMap - Mapa de id de ingrediente a objeto.
  * @param {Function} props.onViewDetail - Callback al ver detalles.
  * @param {Function} props.onViewCost - Callback al ver valor aproximado.
+ * @param {Function} props.onDelete - Callback al eliminar una base.
+ * @param {string|number|null} props.deletingId - Id de la base en proceso de borrado.
  * @returns {JSX.Element} Rejilla de tarjetas de bases.
  */
-function BasesCards({ items, ingredientMap, onViewDetail, onViewCost }) {
+function BasesCards({ items, ingredientMap, onViewDetail, onViewCost, onDelete, deletingId }) {
   return (
     <Grid>
       {items.map((item) => {
@@ -191,6 +194,13 @@ function BasesCards({ items, ingredientMap, onViewDetail, onViewCost }) {
               </svg>
               Ver valor aproximado
             </CostButton>
+            <DeleteButton
+              type="button"
+              disabled={deletingId === item.id}
+              onClick={() => onDelete(item)}
+            >
+              Eliminar
+            </DeleteButton>
           </Card>
         )
       })}

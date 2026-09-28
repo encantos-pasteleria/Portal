@@ -1,4 +1,5 @@
 import Switch from '../../../../components/Switch/index.jsx'
+import Button from '../../../../components/Button/index.jsx'
 import { formatCurrency } from '../../../../utils/format.js'
 import {
   Grid,
@@ -26,6 +27,7 @@ import {
   CostTotal,
   CostSub,
   EditButton,
+  HeaderActions,
 } from './styles.js'
 
 /**
@@ -38,6 +40,8 @@ import {
  * @param {Function} props.onEdit - Callback al editar.
  * @param {Function} props.onToggleActive - Callback al activar/desactivar.
  * @param {string|number|null} props.togglingId - Id de la receta en proceso de cambio.
+ * @param {Function} props.onDelete - Callback al eliminar una receta.
+ * @param {string|number|null} props.deletingId - Id de la receta en proceso de borrado.
  * @returns {JSX.Element} Rejilla de tarjetas de recetas.
  */
 function RecipesCards({
@@ -47,6 +51,8 @@ function RecipesCards({
   onEdit,
   onToggleActive,
   togglingId,
+  onDelete,
+  deletingId,
 }) {
   return (
     <Grid>
@@ -68,11 +74,20 @@ function RecipesCards({
                   </StatusBadge>
                 </CardInfo>
               </HeaderLeft>
-              <Switch
-                checked={item.active}
-                disabled={togglingId === item.id}
-                onChange={(active) => onToggleActive(item, active)}
-              />
+              <HeaderActions>
+                <Button
+                  variant="danger"
+                  disabled={deletingId === item.id}
+                  onClick={() => onDelete(item)}
+                >
+                  Eliminar
+                </Button>
+                <Switch
+                  checked={item.active}
+                  disabled={togglingId === item.id}
+                  onChange={(active) => onToggleActive(item, active)}
+                />
+              </HeaderActions>
             </CardHeader>
 
             <BasesSection>

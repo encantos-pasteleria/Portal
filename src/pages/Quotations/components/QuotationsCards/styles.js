@@ -42,6 +42,13 @@ export const HeaderLeft = styled.div`
   min-width: 0;
 `
 
+export const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+`
+
 export const Avatar = styled.span`
   display: inline-flex;
   align-items: center;

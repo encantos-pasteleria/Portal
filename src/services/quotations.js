@@ -8,6 +8,7 @@ import {
   createQuotation as firebaseCreateQuotation,
   updateQuotation as firebaseUpdateQuotation,
   updateQuotationActive as firebaseUpdateQuotationActive,
+  deleteQuotation as firebaseDeleteQuotation,
 } from '../firebase/firestore.js'
 
 export function listQuotations(active, cursor) {
@@ -45,4 +46,8 @@ export function updateQuotation(data) {
 
 export function updateQuotationActive(id, active) {
   return firebaseUpdateQuotationActive(id, active)
+}
+
+export function deleteQuotation(id) {
+  return firebaseDeleteQuotation(id)
 }

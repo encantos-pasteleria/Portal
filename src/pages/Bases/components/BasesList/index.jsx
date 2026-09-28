@@ -1,4 +1,5 @@
 import Switch from '../../../../components/Switch/index.jsx'
+import Button from '../../../../components/Button/index.jsx'
 import {
   List,
   Row,
@@ -26,9 +27,19 @@ import {
  * @param {string|number|null} props.togglingId - Id de la base en proceso de cambio.
  * @param {Function} props.onViewDetail - Callback al ver detalles.
  * @param {Function} props.onViewCost - Callback al ver valor aproximado.
+ * @param {Function} props.onDelete - Callback al eliminar una base.
+ * @param {string|number|null} props.deletingId - Id de la base en proceso de borrado.
  * @returns {JSX.Element} Lista de bases.
  */
-function BasesList({ items, onToggleActive, togglingId, onViewDetail, onViewCost }) {
+function BasesList({
+  items,
+  onToggleActive,
+  togglingId,
+  onViewDetail,
+  onViewCost,
+  onDelete,
+  deletingId,
+}) {
   return (
     <List>
       {items.map((item) => {
@@ -77,6 +88,13 @@ function BasesList({ items, onToggleActive, togglingId, onViewDetail, onViewCost
               <CostButton type="button" onClick={() => onViewCost(item)}>
                 Valor aprox.
               </CostButton>
+              <Button
+                variant="danger"
+                disabled={deletingId === item.id}
+                onClick={() => onDelete(item)}
+              >
+                Eliminar
+              </Button>
               <Switch
                 checked={item.active}
                 disabled={togglingId === item.id}

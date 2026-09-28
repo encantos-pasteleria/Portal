@@ -3,7 +3,7 @@ import { useDebounce, useToggle } from '@uidotdev/usehooks'
 import { useIngredientsStore } from '../../hooks/useIngredients.js'
 import { getStockStatus } from '../../utils/stock.js'
 import { normalizeText } from '../../utils/format.js'
-import { createIngredient, updateIngredient, updateIngredientActive } from '../../services/ingredients.js'
+import { createIngredient, updateIngredient, updateIngredientActive, deleteIngredient } from '../../services/ingredients.js'
 import IngredientsToolbar from './components/IngredientsToolbar/index.jsx'
 import IngredientsCards from './components/IngredientsCards/index.jsx'
 import IngredientsList from './components/IngredientsList/index.jsx'
@@ -70,6 +70,7 @@ function Ingredients() {
   const [confirmation, setConfirmation] = useState(null)
   const [isError, setIsError] = useState(false)
   const [togglingId, setTogglingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     if (!confirmation) return undefined
@@ -151,6 +152,32 @@ function Ingredients() {
     }
   }
 
+  /**
+   * Elimina un ingrediente. Si está asociado a una base, lo inhabilita.
+   *
+   * @param {object} ingredient - Ingrediente a eliminar.
+   * @returns {Promise<void>}
+   */
+  const handleDelete = async (ingredient) => {
+    setDeletingId(ingredient.id)
+
+    try {
+      const { deleted } = await deleteIngredient(ingredient.id)
+      if (deleted || active) removeItem(ingredient.id)
+      setConfirmation(
+        deleted
+          ? 'Ingrediente eliminado'
+          : 'Ingrediente inhabilitado porque está asociado a una base',
+      )
+      setIsError(false)
+    } catch (error) {
+      setConfirmation(error.message || 'No se pudo eliminar el ingrediente')
+      setIsError(true)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   let content
 
   if (status === 'loading') {
@@ -193,14 +220,18 @@ function Ingredients() {
             items={pageItems}
             onEdit={openEditModal}
             onToggleActive={handleToggleActive}
+            onDelete={handleDelete}
             togglingId={togglingId}
+            deletingId={deletingId}
           />
         ) : (
           <IngredientsList
             items={pageItems}
             onEdit={openEditModal}
             onToggleActive={handleToggleActive}
+            onDelete={handleDelete}
             togglingId={togglingId}
+            deletingId={deletingId}
           />
         )}
         <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />

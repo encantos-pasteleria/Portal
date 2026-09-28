@@ -260,3 +260,32 @@ export const CostButton = styled.button`
     filter: brightness(0.92);
   }
 `
+
+export const DeleteButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  padding: 8px 14px;
+  margin-top: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-danger);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-danger-soft);
+    border-color: var(--color-danger);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`

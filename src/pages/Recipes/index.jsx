@@ -4,7 +4,7 @@ import { useRecipesStore } from '../../hooks/useRecipes.js'
 import { useBasesStore } from '../../hooks/useBases.js'
 import { useIngredientsStore } from '../../hooks/useIngredients.js'
 import { useSuppliersStore } from '../../hooks/useSuppliers.js'
-import { createRecipe, updateRecipe, updateRecipeActive } from '../../services/recipes.js'
+import { createRecipe, updateRecipe, updateRecipeActive, deleteRecipe } from '../../services/recipes.js'
 import { normalizeText } from '../../utils/format.js'
 import { computeRecipeCost } from '../../utils/recipes.js'
 import RecipesToolbar from './components/RecipesToolbar/index.jsx'
@@ -104,6 +104,7 @@ function Recipes() {
   const [submitting, setSubmitting] = useState(false)
   const [confirmation, setConfirmation] = useState(null)
   const [togglingId, setTogglingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     if (!confirmation) return undefined
@@ -183,6 +184,26 @@ function Recipes() {
     }
   }
 
+  /**
+   * Elimina una receta y sincroniza con la API.
+   *
+   * @param {object} recipe - Receta a eliminar.
+   * @returns {Promise<void>}
+   */
+  const handleDelete = async (recipe) => {
+    setDeletingId(recipe.id)
+
+    try {
+      const { deleted } = await deleteRecipe(recipe.id)
+      if (deleted || active) removeItem(recipe.id)
+      setConfirmation(deleted ? 'Receta eliminada' : 'Receta inhabilitada')
+    } catch (error) {
+      setConfirmation(error.message || 'No se pudo eliminar la receta')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   let content
 
   if (status === 'loading') {
@@ -226,6 +247,8 @@ function Recipes() {
           onEdit={openEditModal}
           onToggleActive={handleToggleActive}
           togglingId={togglingId}
+          onDelete={handleDelete}
+          deletingId={deletingId}
         />
         <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
       </>

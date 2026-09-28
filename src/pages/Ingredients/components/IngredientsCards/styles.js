@@ -112,3 +112,9 @@ export const CardFooter = styled.div`
   padding-top: 14px;
   border-top: 1px solid var(--color-border);
 `
+
+export const FooterActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`

@@ -5,6 +5,7 @@ import {
   createIngredient as firebaseCreateIngredient,
   updateIngredient as firebaseUpdateIngredient,
   updateIngredientActive as firebaseUpdateIngredientActive,
+  deleteIngredient as firebaseDeleteIngredient,
 } from '../firebase/firestore.js'
 
 export function listIngredients(active, cursor) {
@@ -30,4 +31,8 @@ export function updateIngredient(data) {
 
 export function updateIngredientActive(id, active) {
   return firebaseUpdateIngredientActive(id, active)
+}
+
+export function deleteIngredient(id) {
+  return firebaseDeleteIngredient(id)
 }

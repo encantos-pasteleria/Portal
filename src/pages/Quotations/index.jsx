@@ -7,6 +7,7 @@ import {
   updateQuotation,
   updateQuotationActive,
   computeQuotationCost,
+  deleteQuotation,
 } from '../../services/quotations.js'
 import { normalizeText } from '../../utils/format.js'
 import { exportQuotationPdf } from '../../utils/quotationPdf.js'
@@ -78,6 +79,7 @@ function Quotations() {
   const [submitting, setSubmitting] = useState(false)
   const [confirmation, setConfirmation] = useState(null)
   const [togglingId, setTogglingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     if (!confirmation) return undefined
@@ -193,6 +195,26 @@ function Quotations() {
     }
   }
 
+  /**
+   * Elimina una cotización y sincroniza con la API.
+   *
+   * @param {object} quotation - Cotización a eliminar.
+   * @returns {Promise<void>}
+   */
+  const handleDelete = async (quotation) => {
+    setDeletingId(quotation.id)
+
+    try {
+      const { deleted } = await deleteQuotation(quotation.id)
+      if (deleted || active) removeItem(quotation.id)
+      setConfirmation(deleted ? 'Cotización eliminada' : 'Cotización inhabilitada')
+    } catch (error) {
+      setConfirmation(error.message || 'No se pudo eliminar la cotización')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   let content
 
   if (status === 'loading') {
@@ -236,6 +258,8 @@ function Quotations() {
           onExport={handleExport}
           onToggleActive={handleToggleActive}
           togglingId={togglingId}
+          onDelete={handleDelete}
+          deletingId={deletingId}
         />
         <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
       </>

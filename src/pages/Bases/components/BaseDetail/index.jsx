@@ -37,6 +37,7 @@ import {
   DrawerFooter,
   FooterLeft,
   EditButton,
+  DeleteButton,
   ToggleWrap,
   ToggleLabel,
 } from './styles.js'
@@ -51,9 +52,20 @@ import {
  * @param {Function} props.onEdit - Callback al editar.
  * @param {Function} props.onToggleActive - Callback al activar/desactivar.
  * @param {string|number|null} props.togglingId - Id de la base en proceso de cambio.
+ * @param {Function} props.onDelete - Callback al eliminar la base.
+ * @param {string|number|null} props.deletingId - Id de la base en proceso de borrado.
  * @returns {JSX.Element|null} Drawer o null.
  */
-function BaseDetail({ base, ingredientMap, onClose, onEdit, onToggleActive, togglingId }) {
+function BaseDetail({
+  base,
+  ingredientMap,
+  onClose,
+  onEdit,
+  onToggleActive,
+  togglingId,
+  onDelete,
+  deletingId,
+}) {
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') onClose()
@@ -200,6 +212,27 @@ function BaseDetail({ base, ingredientMap, onClose, onEdit, onToggleActive, togg
               </svg>
               Editar
             </EditButton>
+            <DeleteButton
+              type="button"
+              disabled={deletingId === base.id}
+              onClick={() => onDelete(base)}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              Eliminar
+            </DeleteButton>
           </FooterLeft>
           <ToggleWrap>
             <ToggleLabel>{base.active ? 'Activo' : 'Inactivo'}</ToggleLabel>
