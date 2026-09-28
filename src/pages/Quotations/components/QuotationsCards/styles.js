@@ -289,14 +289,19 @@ export const TotalSub = styled.span`
   color: var(--color-text-muted);
 `
 
-export const EditButton = styled.button`
+export const CardActions = styled.div`
   display: flex;
+  gap: 8px;
+  margin-top: 10px;
+`
+
+const ActionButton = styled.button`
+  display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  width: 100%;
   padding: 8px 14px;
-  margin-top: 10px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: transparent;
@@ -311,4 +316,13 @@ export const EditButton = styled.button`
     background: var(--color-accent-soft);
     border-color: var(--color-accent);
   }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `
+
+export const EditButton = styled(ActionButton)``
+
+export const ExportButton = styled(ActionButton)``

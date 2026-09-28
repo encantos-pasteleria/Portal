@@ -33,7 +33,9 @@ import {
   TotalLabel,
   TotalValue,
   TotalSub,
+  CardActions,
   EditButton,
+  ExportButton,
 } from './styles.js'
 
 /**
@@ -43,11 +45,19 @@ import {
  * @param {Array} props.items - Cotizaciones a mostrar.
  * @param {Array} [props.recipes=[]] - Recetas parametrizadas (para respaldo de porcentajes).
  * @param {Function} props.onEdit - Callback al editar.
+ * @param {Function} props.onExport - Callback al exportar a PDF.
  * @param {Function} props.onToggleActive - Callback al activar/desactivar.
  * @param {string|number|null} props.togglingId - Id de la cotización en proceso de cambio.
  * @returns {JSX.Element} Rejilla de tarjetas de cotizaciones.
  */
-function QuotationsCards({ items, recipes: allRecipes = [], onEdit, onToggleActive, togglingId }) {
+function QuotationsCards({
+  items,
+  recipes: allRecipes = [],
+  onEdit,
+  onExport,
+  onToggleActive,
+  togglingId,
+}) {
   const recipeMap = new Map(allRecipes.map((recipe) => [String(recipe.id), recipe]))
 
   return (
@@ -219,23 +229,47 @@ function QuotationsCards({ items, recipes: allRecipes = [], onEdit, onToggleActi
               <TotalSub>Sin costos de proveedor registrados</TotalSub>
             )}
 
-            <EditButton type="button" onClick={() => onEdit(item)}>
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
+            <CardActions>
+              <EditButton type="button" onClick={() => onEdit(item)}>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Editar
+              </EditButton>
+              <ExportButton
+                type="button"
+                onClick={() => onExport(item)}
+                aria-label={`Exportar cotización de ${item.clientName} a PDF`}
               >
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-              Editar
-            </EditButton>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M6 9V2h12v7" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+                PDF
+              </ExportButton>
+            </CardActions>
           </Card>
         )
       })}

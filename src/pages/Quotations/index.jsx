@@ -9,6 +9,7 @@ import {
   computeQuotationCost,
 } from '../../services/quotations.js'
 import { normalizeText } from '../../utils/format.js'
+import { exportQuotationPdf } from '../../utils/quotationPdf.js'
 import QuotationsToolbar from './components/QuotationsToolbar/index.jsx'
 import QuotationsCards from './components/QuotationsCards/index.jsx'
 import QuotationForm from './components/QuotationForm/index.jsx'
@@ -164,6 +165,15 @@ function Quotations() {
   }
 
   /**
+   * Exporta una cotización a PDF abriendo el diálogo de impresión.
+   *
+   * @param {object} quotation - Cotización a exportar.
+   */
+  const handleExport = (quotation) => {
+    exportQuotationPdf(quotation)
+  }
+
+  /**
    * Activa o desactiva una cotización y sincroniza con la API.
    *
    * @param {object} quotation - Cotización a modificar.
@@ -223,6 +233,7 @@ function Quotations() {
           items={pageItems}
           recipes={allRecipes}
           onEdit={openEditModal}
+          onExport={handleExport}
           onToggleActive={handleToggleActive}
           togglingId={togglingId}
         />
